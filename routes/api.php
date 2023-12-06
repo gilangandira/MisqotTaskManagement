@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssetsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\VendorController;
 
@@ -68,6 +69,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/task/pause/{id}', [TaskController::class, 'pause']);
     Route::post('/task/end/{id}', [TaskController::class, 'end']);
     Route::get('/task/stopwatch/{id}', [TaskController::class, 'stopwatch']);
+    Route::get('/performance', [TaskController::class, 'performance']);
 });
 Route::get('/users', [AuthController::class, 'index']);
 
@@ -82,8 +84,9 @@ Route::get('/customers/bandwith', [CustomerController::class, 'totalBandwith']);
 ///////////assets/////////////////
 
 
-
-
+Route::post('/performance/store', [PerformanceController::class, 'store']);
+Route::get('/performance', [PerformanceController::class, 'index']);
+Route::get('/totalassets', [AssetsController::class, 'totalAssets']);
 
 
 

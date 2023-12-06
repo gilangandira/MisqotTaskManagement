@@ -10,8 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
-{
+class User extends Authenticatable {
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'users';
@@ -56,11 +55,10 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    protected static function boot()
-    {
+    protected static function boot() {
         parent::boot();
         static::creating(function ($model) {
-            if ($model->getKey() == null) {
+            if($model->getKey() == null) {
                 $model->setAttribute($model->getKeyName(), Str::uuid()->toString());
 
             }
@@ -68,12 +66,13 @@ class User extends Authenticatable
 
     }
 
-    public function tasks()
-    {
+    public function tasks() {
         return $this->belongsToMany(Task::class, 'jobuser');
     }
-    public function assets()
-    {
+    public function performance() {
+        return $this->belongsToMany(Performance::class);
+    }
+    public function assets() {
         return $this->hasMany(Assets::class);
     }
 
@@ -83,8 +82,7 @@ class User extends Authenticatable
      * @return string|array
      */
 
-    public function routeNotificationForFCM()
-    {
+    public function routeNotificationForFCM() {
         return $this->fcm_token;
     }
 
