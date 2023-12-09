@@ -19,26 +19,28 @@ use Illuminate\Support\Facades\Storage;
 use NotificationChannels\Fcm\FcmChannel;
 use App\Notifications\DataAddedNotification;
 
-class AssetsController extends Controller {
+class AssetsController extends Controller
+{
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $data = Assets::with(['condition', 'user', 'vendor', 'customer', 'category']);
-        if($request->keyword) {
-            $data = $data->where('nama_aset', 'LIKE', '%'.$request->keyword.'%')->
-                orWhere('location', 'LIKE', '%'.$request->keyword.'%')->
+        if ($request->keyword) {
+            $data = $data->where('nama_aset', 'LIKE', '%' . $request->keyword . '%')->
+                orWhere('location', 'LIKE', '%' . $request->keyword . '%')->
                 orWhereHas('condition', function ($userQuery) use ($request) {
-                    $userQuery->where('name', 'LIKE', '%'.$request->keyword.'%');
+                    $userQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
                 })->
                 orWhereHas('vendor', function ($vendorQuery) use ($request) {
-                    $vendorQuery->where('name', 'LIKE', '%'.$request->keyword.'%');
+                    $vendorQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
                 })->orWhereHas('category', function ($vendorQuery) use ($request) {
-                    $vendorQuery->where('name', 'LIKE', '%'.$request->keyword.'%');
+                    $vendorQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
                 })->orWhereHas('customer', function ($vendorQuery) use ($request) {
-                    $vendorQuery->where('customers_name', 'LIKE', '%'.$request->keyword.'%');
+                    $vendorQuery->where('customers_name', 'LIKE', '%' . $request->keyword . '%');
                 });
         }
         $assets = $data->paginate(10);
@@ -46,11 +48,13 @@ class AssetsController extends Controller {
         return response()->json($assets);
     }
 
-    public function condition() {
+    public function condition()
+    {
         $data = ConditionAssets::all();
         return response()->json($data);
     }
-    public function category() {
+    public function category()
+    {
         $data = CategoryAssets::all();
         return response()->json($data);
     }
@@ -69,7 +73,8 @@ class AssetsController extends Controller {
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         try {
             $request->validate(
                 [
@@ -87,8 +92,11 @@ class AssetsController extends Controller {
             );
             $user = Auth::user();
             $customer = false;
+            $customerimage = 'customer-image/default.png';
+            $assetsimage = 'assets-image/default.png';
+            
             $customer = $request->input('newCustomer');
-            if($customer === 'true') {
+            if ($customer == 'true') {
                 $request->validate([
                     'customers_name' => 'required',
                     'ppoe_username' => 'required',
@@ -101,6 +109,14 @@ class AssetsController extends Controller {
                     'location' => 'required',
                     'start_dates' => 'required',
                 ]);
+
+                if ($request->file('cusimage')) {
+                    // Store new image
+                    $customerImagePath = $request->file('cusimage')->store('customer-image');
+                } else {
+                    $customerImagePath = $customerimage;
+                }
+
                 $customer = Customer::create([
                     'customers_name' => $request->input('customers_name'),
                     'ppoe_username' => $request->input('ppoe_username'),
@@ -112,13 +128,18 @@ class AssetsController extends Controller {
                     'subscription_fee' => $request->input('subscription_fee'),
                     'location' => $request->input('cuslocation'),
                     'start_dates' => $request->input('start_dates'),
+                    'image' => $customerImagePath
                 ]);
                 $customer_id = $customer->id;
             } else {
                 $customer_id = 1;
             }
-
-
+            if ($request->file('image')) {
+                // Store new image
+                $assetsImagePath = $request->file('image')->store('asset-image');
+            } else {
+                $assetsImagePath = $assetsimage;
+            }
             $data = [
                 'user_id' => $user->id,
                 'category_id' => $request->input('category_id'),
@@ -132,12 +153,13 @@ class AssetsController extends Controller {
                 'serial_assets' => $request->input('serial_assets'),
                 'price' => $request->input('price'),
                 'date_buyed' => $request->input('date_buyed'),
+                'image' => $assetsImagePath
             ];
 
             Assets::create($data);
             // Kirim notifikasi setelah data berhasil ditambahkan
             $users = User::where('fcm_token', '!=', null)->get();
-            foreach($users as $user) {
+            foreach ($users as $user) {
                 $user->notify(new DataAddedNotification);
             }
             return response()->json([
@@ -149,10 +171,10 @@ class AssetsController extends Controller {
 
         } catch (\Exception $e) {
             // Jika terjadi kesalahan, catat pesan kesalahan ke log Laravel
-            Log::error('Kesalahan dalam metode Menambah Data: '.$e->getMessage());
+            Log::error('Kesalahan dalam metode Menambah Data: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan dalam metode Penambahan Data || '.$e->getMessage(),
+                'message' => 'Terjadi kesalahan dalam metode Penambahan Data || ' . $e->getMessage(),
                 'data' => null
             ], 500);
         }
@@ -166,63 +188,71 @@ class AssetsController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         DB::beginTransaction();
         try {
             // Temukan pengguna berdasarkan user_id
             $assets = Assets::find($id);
             $user = Auth::user();
-            if(!$assets) {
+            if (!$assets) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Pengguna tidak ditemukan',
                 ], 404);
             }
 
-            $customer = 1;
+            $customer = 0;
             $customer = $request->input('newCustomer');
-            if($customer == 1) {
+            if ($customer == 1) {
                 $customer = Customer::find($assets->customer_id);
-                if(!$customer) {
+                if (!$customer) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Pengguna tidak ditemukan',
                     ], 404);
                 }
                 // Update informasi Customers
-                if($request->has('customers_name')) {
+                if ($request->has('customers_name')) {
                     $customer->customers_name = $request->input('customers_name');
                 }
-                if($request->has('ppoe_username')) {
+                if ($request->has('ppoe_username')) {
                     $customer->ppoe_username = $request->input('ppoe_username');
                 }
-                if($request->has('ppoe_password')) {
+                if ($request->has('ppoe_password')) {
                     $customer->ppoe_password = $request->input('ppoe_password');
                 }
-                if($request->has('ip_client')) {
+                if ($request->has('ip_client')) {
                     $customer->ip_client = $request->input('ip_client');
                 }
-                if($request->has('ap_ssid')) {
+                if ($request->has('ap_ssid')) {
                     $customer->ap_ssid = $request->input('ap_ssid');
                 }
-                if($request->has('channel_frequensy')) {
+                if ($request->has('channel_frequensy')) {
                     $customer->channel_frequensy = $request->input('channel_frequensy');
                 }
-                if($request->has('bandwith')) {
+                if ($request->has('bandwith')) {
                     $customer->bandwith = $request->input('bandwith');
                 }
-                if($request->has('subscription_fee')) {
+                if ($request->has('subscription_fee')) {
                     $customer->subscription_fee = $request->input('subscription_fee');
                 }
-                if($request->has('location')) {
+                if ($request->has('location')) {
                     $customer->location = $request->input('location');
                 }
-                if($request->has('start_dates')) {
+                if ($request->has('start_dates')) {
                     $customer->start_dates = $request->input('start_dates');
+                }
+                if ($request->file('customerimage')) {
+                    if ($customer->image) {
+                        Storage::delete($customer->image);
+                    }
+                    $path = $request->file('customerimage')->store('profile-image');
+                    $customer->image = $path;
                 }
                 $customer->save();
                 DB::commit();
-            } else if($customer == 2) {
+            } else if ($customer == 2) {
                 $request->validate([
                     'customers_name' => 'required',
                     'ppoe_username' => 'required',
@@ -248,42 +278,57 @@ class AssetsController extends Controller {
                     'start_dates' => $request->input('start_dates'),
                 ]);
                 $assets->customer_id = $customer->id;
+                if ($request->file('customerimage')) {
+                    if ($customer->image) {
+                        Storage::delete($customer->image);
+                    }
+                    $path = $request->file('customerimage')->store('profile-image');
+                    $customer->image = $path;
+                }
             } else {
-                if($request->has('customer_id')) {
+                if ($request->has('customer_id')) {
                     $assets->customer_id = $request->input('customer_id');
                 }
             }
             // Update informasi Assets
             $assets->user_id = $user->id;
-            if($request->has('category_id')) {
+            if ($request->has('category_id')) {
                 $assets->category_id = $request->input('category_id');
             }
-            if($request->has('condition_id')) {
+            if ($request->has('condition_id')) {
                 $assets->condition_id = $request->input('condition_id');
             }
-            if($request->has('vendor_id')) {
+            if ($request->has('vendor_id')) {
                 $assets->vendor_id = $request->input('vendor_id');
             }
-            if($request->has('nama_aset')) {
+            if ($request->has('nama_aset')) {
                 $assets->nama_aset = $request->input('nama_aset');
             }
-            if($request->has('description')) {
+            if ($request->has('description')) {
                 $assets->description = $request->input('description');
             }
-            if($request->has('location')) {
+            if ($request->has('location')) {
                 $assets->location = $request->input('location');
             }
-            if($request->has('serial_number')) {
+            if ($request->has('serial_number')) {
                 $assets->serial_number = $request->input('serial_number');
             }
-            if($request->has('serial_assets')) {
+            if ($request->has('serial_assets')) {
                 $assets->serial_assets = $request->input('serial_assets');
             }
-            if($request->has('price')) {
+            if ($request->has('price')) {
                 $assets->price = $request->input('price');
             }
-            if($request->has('date_buyed')) {
+            if ($request->has('date_buyed')) {
                 $assets->date_buyed = $request->input('date_buyed');
+            }
+
+            if ($request->file('image')) {
+                if ($assets->image) {
+                    Storage::delete($assets->image);
+                }
+                $path = $request->file('image')->store('assets-image');
+                $assets->image = $path;
             }
             $assets->save();
             DB::commit();
@@ -296,14 +341,14 @@ class AssetsController extends Controller {
 
         } catch (Exception $e) {
             // Jika terjadi kesalahan, catat pesan kesalahan ke log Laravel
-            Log::error('Kesalahan dalam metode update: '.$e->getMessage());
+            Log::error('Kesalahan dalam metode update: ' . $e->getMessage());
 
             // Rollback transaksi
             DB::rollback();
 
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan dalam metode update || '.$e->getMessage(),
+                'message' => 'Terjadi kesalahan dalam metode update || ' . $e->getMessage(),
                 'data' => null
             ], 500);
         }
@@ -315,15 +360,17 @@ class AssetsController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $assets = Assets::find($id);
         $assets->delete();
         return response()->json(['message' => 'Success Delete', 'data' => null]);
     }
-    public function totalAssets() {
+    public function totalAssets()
+    {
         $assets = Assets::all();
 
-        foreach($assets as $asset) {
+        foreach ($assets as $asset) {
             $total = $asset->where('status_id', '=', 3)->count();
 
             // $total = $asset->where('price');

@@ -17,22 +17,24 @@ use App\Http\Controllers\Controller;
 use App\Notifications\AddTaskNotification;
 use App\Notifications\DataAddedNotification;
 
-class TaskController extends Controller {
+class TaskController extends Controller
+{
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $data = Task::with(['sla', 'status', 'assets', 'condition', 'users', 'timetracker']);
-        if($request->keyword) {
-            $data = $data->where('name', 'LIKE', '%'.$request->keyword.'%')->
-                orWhere('location', 'LIKE', '%'.$request->keyword.'%')->
+        if ($request->keyword) {
+            $data = $data->where('name', 'LIKE', '%' . $request->keyword . '%')->
+                orWhere('location', 'LIKE', '%' . $request->keyword . '%')->
                 orWhereHas('status', function ($userQuery) use ($request) {
-                    $userQuery->where('name', 'LIKE', '%'.$request->keyword.'%');
+                    $userQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
                 })->
                 orWhereHas('timetracker', function ($userQuery) use ($request) {
-                    $userQuery->where('due_dates', 'LIKE', '%'.$request->keyword.'%');
+                    $userQuery->where('due_dates', 'LIKE', '%' . $request->keyword . '%');
                 });
         }
         // $task = $data->orderBy(function ($query) {
@@ -40,7 +42,9 @@ class TaskController extends Controller {
         //         ->from('timetracker')
         //         ->whereColumn('tasks.timetracker_id', 'timetracker.id');
         // }, 'asc')->paginate(10);
-        $task = $data->orderBy('dates', 'asc')->paginate(10);
+        $task = $data->where('status_id', '!=', 3) // Menambahkan filter untuk status_id bukan 3
+            ->orderBy('dates', 'desc')
+            ->paginate(10);
         return response()->json($task);
 
     }
@@ -57,7 +61,8 @@ class TaskController extends Controller {
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         try {
             $request->validate([
                 'name' => 'required',
@@ -66,7 +71,7 @@ class TaskController extends Controller {
                 'description' => 'required',
                 'location' => 'required',
             ]);
-            $now = Carbon::now();
+            $now = Carbon::now('Asia/Jakarta');
             $sla = SLA::find($request->input('sla_id'));
             $time = TimeTracker::create([
                 'due_dates' => $now->addDay($sla->waktu),
@@ -88,54 +93,55 @@ class TaskController extends Controller {
                 'body' => 'Your notification body here', // Replace with the actual body data
             ];
             $users = User::whereIn('id', $users)->where('fcm_token', '!=', null)->get();
-            foreach($users as $user) {
+            foreach ($users as $user) {
                 $user->notify(new DataTaskNotification);
             }
-            if($task) {
+            if ($task) {
                 return ResponseFormatter::createApi(200, 'success', $task, $job);
             } else {
                 return ResponseFormatter::createApi(201, 'failed');
             }
         } catch (Exception $error) {
-            return ResponseFormatter::createApi(201, 'code error'.$error->getMessage());
+            return ResponseFormatter::createApi(201, 'code error' . $error->getMessage());
         }
     }
 
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         try {
 
             $task = Task::findOrFail($id);
 
             // Update informasi Task
-            if($request->has('name')) {
+            if ($request->has('name')) {
                 $task->name = $request->input('name');
             }
-            if($request->has('sla_id')) {
+            if ($request->has('sla_id')) {
                 $task->sla_id = $request->input('sla_id');
             }
-            if($request->has('description')) {
+            if ($request->has('description')) {
                 $task->description = $request->input('description');
             }
-            if($request->has('location')) {
+            if ($request->has('location')) {
                 $task->location = $request->input('location');
             }
 
             $task->save();
             DB::commit();
             $job = Task::find($task->id);
-            if($request->has('user_id')) {
+            if ($request->has('user_id')) {
                 $users = $request->json('user_id');
                 $job->users()->sync($users);
             }
             $data = Task::where('id', '=', $task->id)->get();
-            if($task) {
+            if ($task) {
                 return ResponseFormatter::createApi(200, 'success', $data);
             } else {
                 return ResponseFormatter::createApi(201, 'failed');
             }
         } catch (Exception $error) {
-            return ResponseFormatter::createApi(404, 'code error'.$error->getMessage());
+            return ResponseFormatter::createApi(404, 'code error' . $error->getMessage());
         }
     }
 
@@ -144,7 +150,8 @@ class TaskController extends Controller {
      *
      * @param  \App\Models\Task  $task
      * @return \Illuminate\Http\Response
-     */public function destroy($id) {
+     */public function destroy($id)
+    {
         // try {
         //     $task = Customer::findOrFail($id);
         //     $task->delete();
@@ -162,19 +169,20 @@ class TaskController extends Controller {
     }
 
 
-    public function do (Request $request, $id) {
+    public function do (Request $request, $id)
+    {
         try {
             $task = Task::findOrFail($id);
             $time = TimeTracker::findOrFail($task->timetracker_id);
             $now = Carbon::now();
-            if($request->has('status_id')) {
+            if ($request->has('status_id')) {
                 $task->status_id = $request->input('status_id');
             }
-            if($task->status_id == 4) {
+            if ($task->status_id == 4) {
                 $time->update([
                     'due_dates' => $now->addDay(30),
                 ]);
-            } else if($task->status_id == 2) {
+            } else if ($task->status_id == 2) {
                 $time->update([
                     'due_dates' => $now->addDay($task->SLA->waktu),
                 ]);
@@ -191,16 +199,17 @@ class TaskController extends Controller {
             $time->update([
                 'timer' => $timestamp
             ]);
-            if($task) {
+            if ($task) {
                 return ResponseFormatter::createApi(200, 'success', $task);
             } else {
                 return ResponseFormatter::createApi(201, 'failed');
             }
         } catch (Exception $error) {
-            return ResponseFormatter::createApi(201, 'code error'.$error->getMessage());
+            return ResponseFormatter::createApi(201, 'code error' . $error->getMessage());
         }
     }
-    public function start(Request $request, $id) {
+    public function start(Request $request, $id)
+    {
         $task = TimeTracker::find($id);
         // Mendefinisikan tanggal dan waktu
         $tanggalWaktu = Carbon::create($task->due_dates);
@@ -213,10 +222,11 @@ class TaskController extends Controller {
         return ResponseFormatter::createApi(200, 'success', $task);
 
     }
-    public function end(Request $request, $id) {
+    public function end(Request $request, $id)
+    {
         $task = TimeTracker::find($id);
 
-        if(!$task) {
+        if (!$task) {
             return ResponseFormatter::createApi(404, 'Task not found', null);
         }
 
@@ -236,16 +246,19 @@ class TaskController extends Controller {
     }
 
 
-    public function jobuser($taskId) {
+    public function jobuser($taskId)
+    {
         $users = Task::find($taskId)->users;
         return response()->json($users);
     }
-    public function sla() {
+    public function sla()
+    {
         $data = SLA::all();
         return response()->json($data);
     }
 
-    public function performance() {
+    public function performance()
+    {
         // Ambil semua pengguna
         $users = User::all();
 
@@ -253,7 +266,7 @@ class TaskController extends Controller {
         $tasksCompletedByUser = [];
 
         // Loop melalui setiap pengguna
-        foreach($users as $user) {
+        foreach ($users as $user) {
             // Hitung jumlah tugas yang diselesaikan oleh pengguna berdasarkan status
             $tasksCompleted = $user->tasks()->where('status_id', '=', 1)->count(); // Gantilah '1' dengan ID status yang sesuai
 

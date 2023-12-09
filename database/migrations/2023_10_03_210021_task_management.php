@@ -19,7 +19,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('sla_id')->default(1);
             $table->unsignedBigInteger('timetracker_id')->default(1);
             $table->string('name');
-           
             $table->text('description');
             $table->dateTime('dates')->default(now());
             $table->string('location');

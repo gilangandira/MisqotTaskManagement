@@ -23,6 +23,7 @@ class Customer extends Model
         'subscription_fee',
         'location',
         'start_dates',
+        'image'
     ];
 
     protected $hidden = [];

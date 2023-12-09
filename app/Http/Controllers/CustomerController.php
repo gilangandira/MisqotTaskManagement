@@ -68,7 +68,14 @@ class CustomerController extends Controller
                 'start_dates' => 'required',
             ]);
 
-            $customer = Customer::create([
+            $customerimage = "default.png";
+            if ($request->file('cusimage')) {
+                // Store new image
+                $customerImagePath = $request->file('cusimage')->store('customer-image');
+            } else {
+                $customerImagePath = $customerimage;
+            }
+            $customer = ([
                 'customers_name' => $request->input('customers_name'),
                 'ppoe_username' => $request->input('ppoe_username'),
                 'ppoe_password' => $request->input('ppoe_password'),
@@ -79,7 +86,9 @@ class CustomerController extends Controller
                 'subscription_fee' => $request->input('subscription_fee'),
                 'location' => $request->input('location'),
                 'start_dates' => $request->input('start_dates'),
+                'image' => $customerImagePath
             ]);
+            Customer::create($customer);
 
             if ($customer) {
                 return ResponseFormatter::createApi(200, 'success', $customer);
@@ -165,6 +174,13 @@ class CustomerController extends Controller
             }
             if ($request->has('start_dates')) {
                 $customer->start_dates = $request->input('start_dates');
+            }
+            if ($request->file('customerimage')) {
+                if ($customer->image) {
+                    Storage::delete($customer->image);
+                }
+                $path = $request->file('customerimage')->store('customer-image');
+                $customer->image = $path;
             }
             $customer->save();
             DB::commit();
