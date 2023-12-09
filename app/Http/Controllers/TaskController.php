@@ -152,14 +152,6 @@ class TaskController extends Controller
      * @return \Illuminate\Http\Response
      */public function destroy($id)
     {
-        // try {
-        //     $task = Customer::findOrFail($id);
-        //     $task->delete();
-
-        //     return ResponseFormatter::createApi(200, 'success destroy data');
-        // } catch (Exception $error) {
-        //     return ResponseFormatter::createApi(202, 'failed ' . $error->getMessage());
-        // }
 
         $task = Task::find($id);
         $job = Task::find($task->id);
@@ -225,7 +217,6 @@ class TaskController extends Controller
     public function end(Request $request, $id)
     {
         $task = TimeTracker::find($id);
-
         if (!$task) {
             return ResponseFormatter::createApi(404, 'Task not found', null);
         }
@@ -239,9 +230,6 @@ class TaskController extends Controller
             'runing_time?' => false,
             'end_time' => now()
         ]);
-
-
-
         return ResponseFormatter::createApi(200, 'success', $task);
     }
 
