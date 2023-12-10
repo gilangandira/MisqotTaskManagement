@@ -193,14 +193,14 @@ class AuthController extends Controller
                 $user->alamat = $request->input('alamat');
             }
 
-
             if ($request->file('image')) {
                 if ($user->image) {
                     Storage::delete($user->image);
                 }
-                $path = $request->file('image')->store('profile-image');
-                $user->image = $path;
+                $path = $request->file('image')->store('public/profile-image');
+                $user->image = basename($path);
             }
+
 
             $user->save();
             DB::commit();

@@ -94,7 +94,7 @@ class AssetsController extends Controller
             $customer = false;
             $customerimage = 'customer-image/default.png';
             $assetsimage = 'assets-image/default.png';
-            
+
             $customer = $request->input('newCustomer');
             if ($customer == 'true') {
                 $request->validate([
@@ -247,7 +247,7 @@ class AssetsController extends Controller
                     if ($customer->image) {
                         Storage::delete($customer->image);
                     }
-                    $path = $request->file('customerimage')->store('profile-image');
+                    $path = $request->file('customerimage')->store('public/customer-image');
                     $customer->image = $path;
                 }
                 $customer->save();
@@ -283,7 +283,7 @@ class AssetsController extends Controller
                         Storage::delete($customer->image);
                     }
                     $path = $request->file('customerimage')->store('profile-image');
-                    $customer->image = $path;
+                    $customer->image = basename($path);
                 }
             } else {
                 if ($request->has('customer_id')) {
@@ -327,8 +327,8 @@ class AssetsController extends Controller
                 if ($assets->image) {
                     Storage::delete($assets->image);
                 }
-                $path = $request->file('image')->store('assets-image');
-                $assets->image = $path;
+                $path = $request->file('image')->store('public/assets-image');
+                $assets->image = basename($path);
             }
             $assets->save();
             DB::commit();

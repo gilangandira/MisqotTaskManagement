@@ -175,12 +175,12 @@ class CustomerController extends Controller
             if ($request->has('start_dates')) {
                 $customer->start_dates = $request->input('start_dates');
             }
-            if ($request->file('customerimage')) {
+            if ($request->file('image')) {
                 if ($customer->image) {
                     Storage::delete($customer->image);
                 }
-                $path = $request->file('customerimage')->store('customer-image');
-                $customer->image = $path;
+                $path = $request->file('image')->store('public/customer-image');
+                $customer->image = basename($path);
             }
             $customer->save();
             DB::commit();
