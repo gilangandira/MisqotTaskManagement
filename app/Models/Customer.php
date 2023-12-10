@@ -12,20 +12,21 @@ class Customer extends Model
     use SoftDeletes;
 
     protected $table = 'customer';
-    protected $fillable = [
-        'customers_name',
-        'ppoe_username',
-        'ppoe_password',
-        'ip_client',
-        'ap_ssid',
-        'channel_frequensy',
-        'bandwith',
-        'subscription_fee',
-        'location',
-        'start_dates',
-        'image'
-    ];
+    // protected $fillable = [
+    //     'customers_name',
+    //     'ppoe_username',
+    //     'ppoe_password',
+    //     'ip_client',
+    //     'ap_ssid',
+    //     'channel_frequensy',
+    //     'bandwith',
+    //     'subscription_fee',
+    //     'location',
+    //     'start_dates',
+    //     'image'
+    // ];
 
+    protected $guarded = ['id'];
     protected $hidden = [];
 
     public function assets()
