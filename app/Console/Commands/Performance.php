@@ -42,6 +42,8 @@ class PerformanceMonth extends Command
 
             // Simpan data ke dalam tabel 'performance'
 
+
+
             $task = Performance::create([
                 'user_id' => $user->id,
                 'month' => $month, // Gunakan bulan saat ini sebagai contoh, Anda mungkin ingin menyesuaikannya

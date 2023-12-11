@@ -6,21 +6,21 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use App\Notifications\DailyNotification;
 
-class DailyNotificationScedule extends Command
+class DailyNotificationMessage extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'notification:daily';
+    protected $signature = 'message:notification';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Notification Daily';
+    protected $description = 'Command description';
 
     /**
      * Execute the console command.
