@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use NotificationChannels\Fcm\FcmChannel;
 use NotificationChannels\Fcm\FcmMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,7 +31,7 @@ class DailyNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return [FcmChannel::class];
     }
 
     /**
@@ -42,9 +43,9 @@ class DailyNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->line('The introduction to the notification.')
+            ->action('Notification Action', url('/'))
+            ->line('Thank you for using our application!');
     }
 
     /**
@@ -56,10 +57,10 @@ class DailyNotification extends Notification
     public function toArray($notifiable)
     {
         return FcmMessage::create()
-        ->setNotification(
-            FcmNotification::create()
-                ->setTitle("Task Management")
-                ->setBody("Check The Task Now")
-        );
+            ->setNotification(
+                FcmNotification::create()
+                    ->setTitle("Task Management")
+                    ->setBody("Check The Task Now")
+            );
     }
 }
