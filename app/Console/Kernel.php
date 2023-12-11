@@ -15,9 +15,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('message:notification')->daily()->appendOutputTo('notifications.log');
-        $schedule->command('checker:statustask')->daily()->appendOutputTo('status.log');
-        $schedule->command('command:performance')->monthly()->appendOutputTo('performance.log');
+        $schedule->command('message:notification')->daily('09:00')->appendOutputTo('notifications.log');
+        $schedule->command('checker:statustask')->daily('01:00')->appendOutputTo('status.log');
+        $schedule->command('command:performance')->monthlyOn(26, '20:00')->appendOutputTo('performance.log');
     }
 
     protected function scheduleTimezone()
