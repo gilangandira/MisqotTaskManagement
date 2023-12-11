@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Notifications\DataAddedNotification;
 use Illuminate\Console\Command;
 use App\Notifications\DailyNotification;
 
@@ -31,8 +32,7 @@ class DailyNotificationMessage extends Command
     {
         $users = User::where('fcm_token', '!=', null)->get();
         foreach ($users as $user) {
-            $user->notify(new DailyNotification);
-            echo "Daily Notifiaction Already Sended to" + $user->name;
+            $user->notify(new DataAddedNotification);
         }
     }
 }
