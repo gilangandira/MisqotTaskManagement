@@ -36,7 +36,7 @@ class PerformanceCounter extends Command
 
         foreach ($users as $user) {
             $tasksCompleted = $user->tasks()
-                ->where('status_id', '=', 1)
+                ->where('status_id', '=', 3)
                 ->whereMonth('dates', '=', $month)
                 ->count();
 
