@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Carbon\Carbon;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Console\Command;
 
@@ -29,15 +30,15 @@ class CheckerTask extends Command
      */
     public function handle()
     {
-        $users = User::where('dates', '!=', null)->get();
+        $tasks = Task::where('dates', '!=', null)->get();
 
-        foreach ($users as $user) {
+        foreach ($tasks as $user) {
             $tanggalUser = Carbon::parse($user->dates); // Menggunakan Carbon untuk memudahkan manipulasi tanggal
 
             // Periksa apakah tanggal sudah lewat
             if ($tanggalUser->isPast()) {
                 // Update status_id sesuai kebutuhan Anda
-                $user->update(['status_id' => 4]);
+                $user->update(['status_id' => 5]);
             }
         }
     }
