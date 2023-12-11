@@ -177,25 +177,10 @@ class CustomerController extends Controller
             }
             if ($request->file('image')) {
                 if ($customer->image) {
-                    // Hapus file lama jika sudah ada
                     Storage::delete($customer->image);
                 }
-
-                // Simpan file baru dengan nama yang sesuai
-                $imageName = generateUniqueFileName($request->file('image'));
-                $request->file('image')->storeAs('public/customer-image', $imageName);
-
-                // Simpan nama file ke database
-                $customer->image = $imageName;
-            }
-
-            // Fungsi untuk menghasilkan nama file yang unik
-            function generateUniqueFileName($file)
-            {
-                $timestamp = now()->format('YmdHis'); // Format timestamp
-                $originalFileName = $file->getClientOriginalName(); // Nama asli file
-                $uniqueFileName = $timestamp . '-' . $originalFileName;
-                return $uniqueFileName;
+                $path = $request->file('image')->store('public/customer-image');
+                $customer->image = basename($path);
             }
             $customer->save();
             DB::commit();
