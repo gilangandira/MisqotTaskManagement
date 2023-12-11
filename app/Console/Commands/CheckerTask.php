@@ -30,7 +30,12 @@ class CheckerTask extends Command
      */
     public function handle()
     {
-        $tasks = Task::where('dates', '!=', null)->get();
+        $tasks = Task::where('dates', '!=', null)
+            ->where(function ($query) {
+                $query->where('status_id', '!=', 3)
+                    ->orWhere('status_id', '!=', 4);
+            })
+            ->get();
 
         foreach ($tasks as $user) {
             $tanggalUser = Carbon::parse($user->dates); // Menggunakan Carbon untuk memudahkan manipulasi tanggal
