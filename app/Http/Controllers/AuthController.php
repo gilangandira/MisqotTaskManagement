@@ -175,9 +175,7 @@ class AuthController extends Controller
             if ($request->has('password')) {
                 $newPassword = $request->input('password');
                 $hashedPassword = bcrypt($newPassword);
-
                 $user->password = $hashedPassword;
-                auth()->user()->CurrentAccessToken()->delete();
             }
             if ($request->has('kelamin')) {
                 $user->kelamin = $request->input('kelamin');
