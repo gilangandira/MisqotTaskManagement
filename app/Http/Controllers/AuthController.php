@@ -118,10 +118,8 @@ class AuthController extends Controller
 
     public function logout()
     {
-        $logout = auth()->user()->CurrentAccessToken()->delete();
-
+        auth()->user()->CurrentAccessToken()->delete();
         $this->response['message'] = 'Success';
-
         return response()->json($this->response, 200);
     }
 
@@ -179,6 +177,7 @@ class AuthController extends Controller
                 $hashedPassword = bcrypt($newPassword);
 
                 $user->password = $hashedPassword;
+                auth()->user()->CurrentAccessToken()->delete();
             }
             if ($request->has('kelamin')) {
                 $user->kelamin = $request->input('kelamin');
